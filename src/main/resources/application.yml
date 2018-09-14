@@ -1,0 +1,15 @@
+
+spring:
+#  redis:
+#    sentinel:
+#      master: mymaster
+#      nodes: 127.0.0.1:6379,127.0.0.1:6379
+ redis:
+        host: 127.0.0.1
+        port: 6379
+server:
+  port: 8080
+logging:
+  level:
+    root: INFO
+    org.springframework.data.redis: INFO
