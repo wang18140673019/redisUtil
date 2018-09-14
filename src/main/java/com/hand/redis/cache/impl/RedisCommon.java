@@ -3,6 +3,7 @@
  */
 package com.hand.redis.cache.impl;
 
+import com.hand.redis.model.User;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 存的都是字符串
  * @author ziming.wang@hand-china.com
  */
 @Component
@@ -31,7 +34,7 @@ public class RedisCommon implements SmartLifecycle {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    protected RedisTemplate<String, String> redisTemplate;
+    protected StringRedisTemplate redisTemplate;
     private String category = "aurora:cache";
 
 
@@ -44,14 +47,15 @@ public class RedisCommon implements SmartLifecycle {
     }
 
 
+    /**
+     *
+     redisTemplate.opsForValue();//操作字符串
+     redisTemplate.opsForHash();//操作hash
+     redisTemplate.opsForList();//操作list
+     redisTemplate.opsForSet();//操作set
+     redisTemplate.opsForZSet();//操作有序set
 
-
-    public void setRedisSerializer(RedisSerializer<String> redisSerializer) {
-        this.redisSerializer = redisSerializer;
-    }
-
-
-
+     */
 
 
 
@@ -68,34 +72,103 @@ public class RedisCommon implements SmartLifecycle {
         return redisTemplate;
     }
 
-    @Autowired
-    public void setRedisTemplate(RedisTemplate<String, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
+
+
+
+    public void setStringValue(String cacheName,String key,  String value){
+        String fullKey= getFullKey(cacheName,key);
+        new String(String.valueOf(1L));
+        redisTemplate.opsForValue().set(fullKey,value);
+    }
+
+    public void  setObjectValue(String cacheName,String key, Object value) {
+        String str= String.valueOf(value);
+        setStringValue(cacheName,key,str);
+
+    }
+    public void  setLongValue(String cacheName,String key,  Long value) {
+        String str= String.valueOf(value);
+        setStringValue(cacheName,key,str);
+
+    }
+
+    public void  setFloatValue(String cacheName,String key, Float value) {
+        String str= String.valueOf(value);
+        setStringValue(cacheName,key,str);
+    }
+
+    public void  setIntegerValue(String cacheName,String key, Integer value) {
+        String str= String.valueOf(value);
+        setStringValue(cacheName,key,str);
+    }
+
+    public void  setDoubleValue(String cacheName,String key, Double value) {
+        String str= String.valueOf(value);
+        setStringValue(cacheName,key,str);
+    }
+
+    public void setMapValue(String cacheName,String key,Map value) {
+        String fullKey= getFullKey(cacheName,key);
+        redisTemplate.opsForHash().putAll(fullKey, value);
+    }
+
+    public Map getMapValue(String cacheName,String key) {
+        return (Map) redisTemplate.execute((RedisCallback) (connection) -> {
+            byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName,key));
+            Map<byte[], byte[]> value = connection.hGetAll(keyBytes);
+            Map returnMap= new HashMap();
+            if (value.size() == 0) {
+                return  null;
+            }
+                for (Map.Entry<byte[], byte[]> entry : value.entrySet()) {
+                    String pName = redisSerializer.deserialize(entry.getKey());
+                    String pValue = redisSerializer.deserialize(entry.getValue());
+                    returnMap.put(pName, pValue);
+
+                }
+
+            return  returnMap;
+        });
     }
 
 
+    public String getStringValue(String cacheName,String key){
+        String fullKey= getFullKey(cacheName,key);
+        return (String)redisTemplate.opsForValue().get(fullKey);
+    }
 
-    public String  getStringValue(String cacheName,String key) {
-              return (String) getValue(cacheName,key,String.class);
+    public Long  getLongValue(String cacheName,String key) {
+          String longStr = getStringValue(cacheName,key);
+        return Long.parseLong(longStr);
+    }
+
+    public Double  getDoubleValue(String cacheName,String key) {
+        String doubleStr = getStringValue(cacheName,key);
+        return Double.parseDouble(doubleStr);
+    }
+
+    public Integer  getIntegerValue(String cacheName,String key) {
+        String integerStr = getStringValue(cacheName,key);
+        return Integer.parseInt(integerStr);
+    }
+
+    public Float  getFloatValue(String cacheName,String key) {
+        String floatStr = getStringValue(cacheName,key);
+        return Float.parseFloat(floatStr);
     }
 
 
-    public Object getMapValue(String cacheName,String key) {
-        return (Object) getValue(cacheName,key,HashMap.class);
-    }
-
-
-    public String  getLongValue(String cacheName,String key) {
-        return (String) getValue(cacheName,key,Long.class);
-    }
     /**
      *
-     * @param key redis key
-     * @param returnType
+     * @param cacheName namespace
+     * @param key
+     * @param returnType bean 对象(实体类)
+     * @param <T>
      * @return
      */
-    public Object getValue(String cacheName,String key,Class returnType) {
-        return redisTemplate.execute((RedisCallback) (connection) -> {
+    public <T> T  getBeanValue(String cacheName,String key,Class returnType) {
+
+        return(T) redisTemplate.execute((RedisCallback) (connection) -> {
             byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName,key));
             Map<byte[], byte[]> value = connection.hGetAll(keyBytes);
             if (value.size() == 0) {
@@ -122,38 +195,39 @@ public class RedisCommon implements SmartLifecycle {
                         BeanUtils.setProperty(bean, pName, pValue);
                     }
                 }
-                return bean;
+                return (T) bean;
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
-            return  null;
+            return null;
         });
     }
 
-
-    public void setBeanValue(String cacheName,String key,  Object value) {
+    /**
+     *
+     * @param cacheName redis namespace
+     * @param key
+     * @param value 存入redis 的实体类
+     */
+    public <T> void setBeanValue(String cacheName,String key, T value) {
+        Map<String, Object> map =null;
         try {
-            Map<String, Object> map = convertToMap(value);
-            setMapValue(cacheName,key, map);
+            map = convertToMap(value);
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {
                 logger.error("setValue error ", e);
             }
         }
-    }
+        setbeanToMap(cacheName,key,map);
 
 
-    public void remove(String cacheName,String key) {
-        redisTemplate.execute((RedisCallback) (connection) -> {
-            byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName,key));
-            connection.del(keyBytes);
-            return  null;
-        });
+
     }
 
 
 
-    private void setMapValue(String cacheName,String key, Map<String, Object> value) {
+
+    private void setbeanToMap(String cacheName,String key, Map<String, Object> value) {
         byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName,key));
         Map<byte[], byte[]> data = new HashMap<>();
         value.forEach((k, v) -> {
@@ -179,7 +253,8 @@ public class RedisCommon implements SmartLifecycle {
 
 
 
-    private Map<String, Object> convertToMap(Object obj)
+
+    private <T> Map<String, Object> convertToMap(T obj)
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         if (obj instanceof Map) {
             return (Map<String, Object>) obj;
@@ -209,13 +284,30 @@ public class RedisCommon implements SmartLifecycle {
          if(redisTemplate ==null){
              throw new RuntimeException("redis 相关配置出错");
          }
+        logger.debug("开始测试");
+         String cacheName ="test";
+         String name = "王子明";
+         setStringValue(cacheName,"name",name);
+        name= getStringValue(cacheName,"name");
+        logger.warn("name :{}",name);
+
          Map<String, Object> testMap = new HashMap<String,Object>();
               testMap.put("name","wangziming");
         setMapValue("test","wang",testMap);
               testMap.put("age","25");
-         setMapValue("test","wang",testMap);
-         testMap =(Map<String, Object>) getMapValue("test","wang");
-         System.out.println("测试"+testMap);
+         setMapValue(cacheName,"wang",testMap);
+         testMap =(Map<String, Object>) getMapValue(cacheName,"wang");
+        logger.warn("testMap :{}",testMap);
+
+        setObjectValue(cacheName,"age",12L);
+        Long age = getLongValue(cacheName,"age");
+        logger.warn("age :{}",age);
+        User user = new User();
+        user.setName("石锐");
+        user.setAge(18L);
+        setBeanValue(cacheName,"user",user);
+        user = (User) getBeanValue(cacheName,"user",User.class);
+        logger.warn("user name:{} age {}",user.getName(),user.getAge());
 
     }
 
