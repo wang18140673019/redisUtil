@@ -26,6 +26,7 @@ import java.util.Map;
 
 /**
  * 存的都是字符串
+ *
  * @author ziming.wang@hand-china.com
  */
 @Component
@@ -37,7 +38,6 @@ public class RedisCommon implements SmartLifecycle {
     protected StringRedisTemplate redisTemplate;
     private String category = "aurora:cache";
 
-
     @Autowired
     protected RedisSerializer<String> redisSerializer;
 
@@ -46,19 +46,13 @@ public class RedisCommon implements SmartLifecycle {
         return new StringRedisSerializer();
     }
 
-
     /**
      *
-     redisTemplate.opsForValue();//操作字符串
-     redisTemplate.opsForHash();//操作hash
-     redisTemplate.opsForList();//操作list
-     redisTemplate.opsForSet();//操作set
-     redisTemplate.opsForZSet();//操作有序set
-
+     * redisTemplate.opsForValue();//操作字符串 redisTemplate.opsForHash();//操作hash
+     * redisTemplate.opsForList();//操作list redisTemplate.opsForSet();//操作set
+     * redisTemplate.opsForZSet();//操作有序set
+     *
      */
-
-
-
 
     public String getCategory() {
         return category;
@@ -72,106 +66,104 @@ public class RedisCommon implements SmartLifecycle {
         return redisTemplate;
     }
 
-
-
-
-    public void setStringValue(String cacheName,String key,  String value){
-        String fullKey= getFullKey(cacheName,key);
-        redisTemplate.opsForValue().set(fullKey,value);
+    public void setStringValue(String cacheName, String key, String value) {
+        String fullKey = getFullKey(cacheName, key);
+        redisTemplate.opsForValue().set(fullKey, value);
     }
 
-    public void  setObjectValue(String cacheName,String key, Object value) {
-        String str= String.valueOf(value);
-        setStringValue(cacheName,key,str);
-
-    }
-    public void  setLongValue(String cacheName,String key,  Long value) {
-        String str= String.valueOf(value);
-        setStringValue(cacheName,key,str);
+    public void setObjectValue(String cacheName, String key, Object value) {
+        String str = String.valueOf(value);
+        setStringValue(cacheName, key, str);
 
     }
 
-    public void  setFloatValue(String cacheName,String key, Float value) {
-        String str= String.valueOf(value);
-        setStringValue(cacheName,key,str);
+    public void setLongValue(String cacheName, String key, Long value) {
+        String str = String.valueOf(value);
+        setStringValue(cacheName, key, str);
+
     }
 
-    public void  setIntegerValue(String cacheName,String key, Integer value) {
-        String str= String.valueOf(value);
-        setStringValue(cacheName,key,str);
+    public void setFloatValue(String cacheName, String key, Float value) {
+        String str = String.valueOf(value);
+        setStringValue(cacheName, key, str);
     }
 
-    public void  setDoubleValue(String cacheName,String key, Double value) {
-        String str= String.valueOf(value);
-        setStringValue(cacheName,key,str);
+    public void setIntegerValue(String cacheName, String key, Integer value) {
+        String str = String.valueOf(value);
+        setStringValue(cacheName, key, str);
     }
 
-    public void setMapValue(String cacheName,String key,Map value) {
-        String fullKey= getFullKey(cacheName,key);
+    public void setDoubleValue(String cacheName, String key, Double value) {
+        String str = String.valueOf(value);
+        setStringValue(cacheName, key, str);
+    }
+
+    public void setMapValue(String cacheName, String key, Map value) {
+        String fullKey = getFullKey(cacheName, key);
         redisTemplate.opsForHash().putAll(fullKey, value);
     }
 
-    public Map getMapValue(String cacheName,String key) {
+    public Map getMapValue(String cacheName, String key) {
         return (Map) redisTemplate.execute((RedisCallback) (connection) -> {
-            byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName,key));
+            byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName, key));
             Map<byte[], byte[]> value = connection.hGetAll(keyBytes);
-            Map returnMap= new HashMap();
+            Map returnMap = new HashMap();
             if (value.size() == 0) {
-                return  null;
+                return null;
             }
-                for (Map.Entry<byte[], byte[]> entry : value.entrySet()) {
-                    String pName = redisSerializer.deserialize(entry.getKey());
-                    String pValue = redisSerializer.deserialize(entry.getValue());
-                    returnMap.put(pName, pValue);
+            for (Map.Entry<byte[], byte[]> entry : value.entrySet()) {
+                String pName = redisSerializer.deserialize(entry.getKey());
+                String pValue = redisSerializer.deserialize(entry.getValue());
+                returnMap.put(pName, pValue);
 
-                }
+            }
 
-            return  returnMap;
+            return returnMap;
         });
     }
 
-
-    public String getStringValue(String cacheName,String key){
-        String fullKey= getFullKey(cacheName,key);
-        return (String)redisTemplate.opsForValue().get(fullKey);
+    public String getStringValue(String cacheName, String key) {
+        String fullKey = getFullKey(cacheName, key);
+        return (String) redisTemplate.opsForValue().get(fullKey);
     }
 
-    public Long  getLongValue(String cacheName,String key) {
-          String longStr = getStringValue(cacheName,key);
+    public Long getLongValue(String cacheName, String key) {
+        String longStr = getStringValue(cacheName, key);
         return Long.parseLong(longStr);
     }
 
-    public Double  getDoubleValue(String cacheName,String key) {
-        String doubleStr = getStringValue(cacheName,key);
+    public Double getDoubleValue(String cacheName, String key) {
+        String doubleStr = getStringValue(cacheName, key);
         return Double.parseDouble(doubleStr);
     }
 
-    public Integer  getIntegerValue(String cacheName,String key) {
-        String integerStr = getStringValue(cacheName,key);
+    public Integer getIntegerValue(String cacheName, String key) {
+        String integerStr = getStringValue(cacheName, key);
         return Integer.parseInt(integerStr);
     }
 
-    public Float  getFloatValue(String cacheName,String key) {
-        String floatStr = getStringValue(cacheName,key);
+    public Float getFloatValue(String cacheName, String key) {
+        String floatStr = getStringValue(cacheName, key);
         return Float.parseFloat(floatStr);
     }
 
-
     /**
      *
-     * @param cacheName namespace
+     * @param cacheName
+     *            namespace
      * @param key
-     * @param returnType bean 对象(实体类)
+     * @param returnType
+     *            bean 对象(实体类)
      * @param <T>
      * @return
      */
-    public <T> T  getBeanValue(String cacheName,String key,Class returnType) {
+    public <T> T getBeanValue(String cacheName, String key, Class returnType) {
 
-        return(T) redisTemplate.execute((RedisCallback) (connection) -> {
-            byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName,key));
+        return (T) redisTemplate.execute((RedisCallback) (connection) -> {
+            byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName, key));
             Map<byte[], byte[]> value = connection.hGetAll(keyBytes);
             if (value.size() == 0) {
-                return  null;
+                return null;
             }
             try {
                 Object bean = returnType.newInstance();
@@ -204,12 +196,14 @@ public class RedisCommon implements SmartLifecycle {
 
     /**
      *
-     * @param cacheName redis namespace
+     * @param cacheName
+     *            redis namespace
      * @param key
-     * @param value 存入redis 的实体类
+     * @param value
+     *            存入redis 的实体类
      */
-    public <T> void setBeanValue(String cacheName,String key, T value) {
-        Map<String, Object> map =null;
+    public <T> void setBeanValue(String cacheName, String key, T value) {
+        Map<String, Object> map = null;
         try {
             map = convertToMap(value);
         } catch (Exception e) {
@@ -217,18 +211,15 @@ public class RedisCommon implements SmartLifecycle {
                 logger.error("setValue error ", e);
             }
         }
-        setbeanToMap(cacheName,key,map);
-
-
+        setbeanToMap(cacheName, key, map);
 
     }
 
-
-
-
-    private void setbeanToMap(String cacheName,String key, Map<String, Object> value) {
-        if(value==null) return;
-        byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName,key));
+    private void setbeanToMap(String cacheName, String key, Map<String, Object> value) {
+        if (value == null) {
+            return;
+        }
+        byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName, key));
         Map<byte[], byte[]> data = new HashMap<>();
         value.forEach((k, v) -> {
             // 排除特殊字段
@@ -249,11 +240,6 @@ public class RedisCommon implements SmartLifecycle {
         });
     }
 
-
-
-
-
-
     private <T> Map<String, Object> convertToMap(T obj)
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         if (obj instanceof Map) {
@@ -264,10 +250,9 @@ public class RedisCommon implements SmartLifecycle {
         return map;
     }
 
-    protected String getFullKey(String cacheName,String key) {
+    protected String getFullKey(String cacheName, String key) {
         return new StringBuilder(getCategory()).append(":").append(cacheName).append(":").append(key).toString();
     }
-
 
     @Override
     public boolean isAutoStartup() {
@@ -281,33 +266,33 @@ public class RedisCommon implements SmartLifecycle {
 
     @Override
     public void start() {
-         if(redisTemplate ==null){
-             throw new RuntimeException("redis 相关配置出错");
-         }
+        if (redisTemplate == null) {
+            throw new RuntimeException("redis 相关配置出错");
+        }
         logger.debug("开始测试");
-         String cacheName ="test";
-         String name = "王子明";
-         setStringValue(cacheName,"name",name);
-        name= getStringValue(cacheName,"name");
-        logger.warn("name :{}",name);
+        String cacheName = "test";
+        String name = "王子明";
+        setStringValue(cacheName, "name", name);
+        name = getStringValue(cacheName, "name");
+        logger.warn("name :{}", name);
 
-         Map<String, Object> testMap = new HashMap<String,Object>();
-              testMap.put("name","wangziming"+System.currentTimeMillis());
-        setMapValue("test","wang",testMap);
-              testMap.put("age","25");
-         setMapValue(cacheName,"wang",testMap);
-         testMap =(Map<String, Object>) getMapValue(cacheName,"wang");
-        logger.warn("testMap :{}",testMap);
+        Map<String, Object> testMap = new HashMap<String, Object>();
+        testMap.put("name", "wangziming" + System.currentTimeMillis());
+        setMapValue("test", "wang", testMap);
+        testMap.put("age", "25");
+        setMapValue(cacheName, "wang", testMap);
+        testMap = (Map<String, Object>) getMapValue(cacheName, "wang");
+        logger.warn("testMap :{}", testMap);
 
-        setObjectValue(cacheName,"age",12L);
-        Long age = getLongValue(cacheName,"age");
-        logger.warn("age :{}",age);
+        setObjectValue(cacheName, "age", 12L);
+        Long age = getLongValue(cacheName, "age");
+        logger.warn("age :{}", age);
         User user = new User();
         user.setName("石锐");
         user.setAge(18L);
-        setBeanValue(cacheName,"user",user);
-        user = (User) getBeanValue(cacheName,"user",User.class);
-        logger.warn("user name:{} age {}",user.getName(),user.getAge());
+        setBeanValue(cacheName, "user", user);
+        user = (User) getBeanValue(cacheName, "user", User.class);
+        logger.warn("user name:{} age {}", user.getName(), user.getAge());
 
     }
 
