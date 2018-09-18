@@ -1,14 +1,15 @@
-
 spring:
-#  redis:
-#    sentinel:
-#      master: mymaster
-#      nodes: 127.0.0.1:6379,127.0.0.1:6379
- redis:
-        host: 127.0.0.1
-        port: 6379
-server:
-  port: 8080
+  redis:
+    cluster:
+      nodes: wangziming.xin:7000,wangziming.xin:7001,wangziming.xin:7002, wangziming.xin:7003,wangziming.xin:7004,wangziming.xin:7005
+      max-redirects: 3
+    password: 1993wang
+    timeout: 3000
+    jedis:
+      pool:
+        max-active: 20
+        max-idle: 8
+
 logging:
   level:
     root: INFO

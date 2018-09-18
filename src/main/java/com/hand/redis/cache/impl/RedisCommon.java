@@ -77,7 +77,6 @@ public class RedisCommon implements SmartLifecycle {
 
     public void setStringValue(String cacheName,String key,  String value){
         String fullKey= getFullKey(cacheName,key);
-        new String(String.valueOf(1L));
         redisTemplate.opsForValue().set(fullKey,value);
     }
 
@@ -228,6 +227,7 @@ public class RedisCommon implements SmartLifecycle {
 
 
     private void setbeanToMap(String cacheName,String key, Map<String, Object> value) {
+        if(value==null) return;
         byte[] keyBytes = redisSerializer.serialize(getFullKey(cacheName,key));
         Map<byte[], byte[]> data = new HashMap<>();
         value.forEach((k, v) -> {
@@ -292,7 +292,7 @@ public class RedisCommon implements SmartLifecycle {
         logger.warn("name :{}",name);
 
          Map<String, Object> testMap = new HashMap<String,Object>();
-              testMap.put("name","wangziming");
+              testMap.put("name","wangziming"+System.currentTimeMillis());
         setMapValue("test","wang",testMap);
               testMap.put("age","25");
          setMapValue(cacheName,"wang",testMap);
