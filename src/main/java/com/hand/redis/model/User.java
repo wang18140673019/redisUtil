@@ -3,6 +3,8 @@ package com.hand.redis.model;/**
  */
 
 
+import com.hand.redis.cache.annotation.RedisBean;
+
 import java.io.Serializable;
 
 /**
@@ -10,6 +12,8 @@ import java.io.Serializable;
  * @date: 2018/9/14  16:51
  * @desc:
  **/
+
+@RedisBean
 public class  User implements Serializable {
     private String name;
     private Long   age;
